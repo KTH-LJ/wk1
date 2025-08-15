@@ -8,7 +8,7 @@ class SecureBootComponent:
         self.key = key  
         self.is_verified = False
         self.memory = {}  
-        self.valid_prefix = valid_prefix  # 新增：微码有效前缀
+        self.valid_prefix = valid_prefix 
 
     def generate_hmac(self, data):
         return hmac.new(self.key, data, hashlib.sha256).digest()
@@ -18,18 +18,15 @@ class SecureBootComponent:
         self.is_verified = hmac.compare_digest(expected_hmac, received_hmac)
         return self.is_verified
 
-    # 新增：校验微码本身是否有效
     def is_microcode_valid(self, microcode):
         if self.valid_prefix is None:
-            return True  # 无有效前缀要求，默认有效
+            return True  
         return microcode.startswith(self.valid_prefix)
 
     def load_microcode(self, microcode, microcode_hmac):
-        # 先校验微码本身是否有效
         if not self.is_microcode_valid(microcode):
             print(f"[{self.name}] Microcode is invalid by content!")
             return False
-        # 再校验 HMAC
         if self.verify_hmac(microcode, microcode_hmac):
             print(f"[{self.name}] Microcode verified successfully.")
             self.memory["microcode"] = microcode
@@ -56,7 +53,6 @@ class SecureBootComponent:
 
 class SecureBootPipeline:
     def __init__(self, root_key, bootloader_key=None, kernel_key=None):
-        # 给 Root 组件指定有效前缀（示例：root_microcode_valid_）
         self.root_component = SecureBootComponent("Root", root_key, valid_prefix=b'root_microcode_valid_')
         self.bootloader_component = SecureBootComponent("Bootloader", bootloader_key if bootloader_key else os.urandom(32))
         self.kernel_component = SecureBootComponent("Kernel", kernel_key if kernel_key else os.urandom(32))
@@ -82,4 +78,5 @@ class SecureBootPipeline:
         self.kernel_component.execute_microcode()
 
         print("=== Secure Boot Pipeline Completed Successfully ===")
+
         return True
